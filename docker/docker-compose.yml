@@ -5,7 +5,7 @@ services:
     build:
       context: ./django 
     container_name: django_app 
-    command: python manage.py runserver 0.0.0.0:8000 
+    command: gunicorn goit.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - ./django:/app 
     env_file:
@@ -21,9 +21,7 @@ services:
     env_file:
       - .env 
     volumes:
-      - postgres_data:/var/lib/postgresql/data 
-    ports:
-      - "5432:5432" 
+      - postgres_data:/var/lib/postgresql/data     
 
   nginx:
     image: nginx:latest 
