@@ -33,7 +33,7 @@ else
 
     # Add Docker repository to APT sources
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
-        https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+        https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "${VERSION_CODENAME}") stable" | \
         sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
     sudo apt-get update -y # Update package index
@@ -48,7 +48,7 @@ echo "              Docker Compose setup"
 echo "              https://docs.docker.com/desktop/setup/install/linux/ubuntu/"
 echo "-------------------------------------------------------------------"
 
-if command -v docker-compose &>/dev/null || docker compose version &>/dev/null 2>&1; then
+if docker compose version &>/dev/null 2>&1; then
     skip "Installed Docker Compose ($(docker compose version))"
 else
     echo "[*] Installing Docker Compose..."
@@ -60,7 +60,7 @@ echo "-------------------------------------------------------------------"
 echo "              Python setup"
 echo "-------------------------------------------------------------------"
 
-if python3 --version 2>/dev/null | grep -qP "3\.(9|[1-9][0-9])"; then
+if python3 --version 2>/dev/null | grep -qE "3\.(9|[1-9][0-9])"; then
     skip "Installed Python ($(python3 --version))"
 else
     echo "[*] Start Python installation..."
@@ -81,11 +81,10 @@ else
 fi
 
 echo "-------------------------------------------------------------------"
-echo "-------------------------------------------------------------------"
-echo -e "DEV TOOLS VERSIONS: ${NC}"
+echo -e "${GREEN}DEV TOOLS VERSIONS:${NC}"
 echo "  $(docker --version)"
 echo "  $(docker compose version)"
 echo "  $(python3 --version)"
 echo "  Django $(python3 -c 'import django; print(django.get_version())')"
 echo "-------------------------------------------------------------------"
-echo -e "$Warning: execute 'newgrp docker' to apply Docker group changes${NC}"
+echo -e "${YELLOW}Warning: execute 'newgrp docker' to apply Docker group changes${NC}"
