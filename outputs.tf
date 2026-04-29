@@ -76,3 +76,40 @@ output "ecr_registry_id" {
   description = "ID of the ECR registry"
   value       = module.ecr.registry_id
 }
+# -----------------------------------------------------------------------
+#               EKS
+# -----------------------------------------------------------------------
+output "eks_cluster_name" {
+  description = "Name of the EKS cluster"
+  value       = module.eks.cluster_name
+}
+
+output "eks_cluster_endpoint" {
+  description = "Endpoint of the EKS cluster"
+  value       = module.eks.cluster_endpoint
+}
+
+output "eks_cluster_certificate_authority" {
+  description = "Certificate authority data for the EKS cluster"
+  value       = module.eks.cluster_certificate_authority
+}
+
+output "eks_cluster_arn" {
+  description = "ARN of the EKS cluster"
+  value       = module.eks.cluster_arn
+}
+
+output "eks_node_group_name" {
+  description = "Name of the EKS node group"
+  value       = module.eks.node_group_name
+}
+
+output "eks_node_group_arn" {
+  description = "ARN of the EKS node group"
+  value       = module.eks.node_group_arn
+}
+
+output "eks_node_group_instance_types" {
+  description = "Instance types used in the EKS node group"
+  value       = module.eks.node_group_instance_types
+}

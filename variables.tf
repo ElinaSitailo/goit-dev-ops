@@ -126,7 +126,7 @@ variable "eks_cluster_name" {
 variable "eks_cluster_version" {
   description = "Kubernetes version for the EKS cluster"
   type        = string
-  default     = "1.29"
+  default     = "1.32" # fixed to 1.32 to prevent issues with older versions that is supported in the region and 'terraform apply' fails with "Error: creating EKS Node Group...Requested AMI for this version 1.29 is not supported" error
 }
 
 variable "eks_node_group_name" {

@@ -80,8 +80,8 @@ resource "aws_eks_cluster" "eks" {
 
   # Adds API authentication mode and allows automatic admin access to the cluster creator.
   access_config {
-    authentication_mode                         = true # Authentication using API
-    bootstrap_cluster_creator_admin_permissions = true # provide admin permission to user who created the cluster
+    authentication_mode                         = "API" # Authentication using API
+    bootstrap_cluster_creator_admin_permissions = true  # provide admin permission to user who created the cluster
   }
 
   # Ensure the EKS cluster is created after the IAM roles and policies are in place

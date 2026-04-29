@@ -24,7 +24,7 @@ output "eks_node_group_role_arn" {
 
 output "eks_node_group_arn" {
   description = "ARN of the EKS node group"
-  value       = aws_eks_node_group.eks_node_group.arn
+  value       = aws_eks_node_group.general.arn
 }
 
 output "eks_cluster_security_group_id" {
