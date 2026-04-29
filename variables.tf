@@ -114,3 +114,53 @@ variable "ecr_encryption_type" {
   type        = string
   default     = "AES256"
 }
+# -----------------------------------------------------------------------
+#               EKS 
+# -----------------------------------------------------------------------
+variable "eks_cluster_name" {
+  description = "EKS cluster name"
+  type        = string
+  default     = "lesson-7-eks"
+}
+
+variable "eks_cluster_version" {
+  description = "Kubernetes version for the EKS cluster"
+  type        = string
+  default     = "1.29"
+}
+
+variable "eks_node_group_name" {
+  description = "EKS node group name"
+  type        = string
+  default     = "lesson-7-nodes"
+}
+
+variable "eks_node_instance_types" {
+  description = "EC2 instance types for EKS nodes"
+  type        = list(string)
+  default     = ["t3.medium"]
+}
+
+variable "eks_node_desired_size" {
+  description = "Desired number of EKS nodes"
+  type        = number
+  default     = 2
+}
+
+variable "eks_node_min_size" {
+  description = "Minimum number of EKS nodes"
+  type        = number
+  default     = 1
+}
+
+variable "eks_node_max_size" {
+  description = "Maximum number of EKS nodes"
+  type        = number
+  default     = 4
+}
+
+variable "eks_node_disk_size" {
+  description = "Disk size (in GB) for EKS nodes"
+  type        = number
+  default     = 20
+}

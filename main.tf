@@ -49,3 +49,20 @@ module "ecr" {
   force_delete         = var.ecr_force_delete
 }
 
+module "eks" {
+  source = "./modules/eks"
+
+  cluster_name    = var.eks_cluster_name
+  cluster_version = var.eks_cluster_version
+
+  vpc_id             = module.vpc.id
+  private_subnet_ids = module.vpc.private_subnet_ids
+  public_subnet_ids  = module.vpc.public_subnet_ids
+
+  node_group_name     = var.eks_node_group_name
+  node_instance_types = var.eks_node_instance_types
+  node_desired_size   = var.eks_node_desired_size
+  node_min_size       = var.eks_node_min_size
+  node_max_size       = var.eks_node_max_size
+  node_disk_size      = var.eks_node_disk_size
+}

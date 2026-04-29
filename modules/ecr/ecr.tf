@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-# This module creates Amazon ECR repo to store Docker images for the application.
+# This module creates Amazon ECR (Elastic Container Registry) repo to store Docker images for the application.
 # --------------------------------------------------------------------------------------------------
 
 data "aws_caller_identity" "current" {}
@@ -25,7 +25,6 @@ resource "aws_ecr_repository" "main" {
     Name = var.name
   }
 }
-
 
 # --------------------------------------------------------------------------------------------------
 # Lifecycle Policy for Docker images with automatic cleanup of old images
