@@ -173,6 +173,25 @@ resource "aws_security_group" "eks_node_group" {
 # --------------------------------------------------------------------------------------------------
 #               Node group for EKS
 # --------------------------------------------------------------------------------------------------
+
+# The EKS node group is created using an EC2 launch template, 
+# which allows for more flexible configuration of the worker nodes.
+# It binds aws_security_group.eks_node_group with aws_eks_node_group.general
+# to allow communication between the control plane and worker nodes, 
+# as well as between the worker nodes themselves.
+resource "aws_launch_template" "eks_node_group" {
+  name_prefix = "${var.cluster_name}-node-group-"
+
+  vpc_security_group_ids = [aws_security_group.eks_node_group.id]
+
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name = "${var.cluster_name}-node"
+    }
+  }
+}
+
 resource "aws_eks_node_group" "general" {
   cluster_name    = aws_eks_cluster.eks.name
   node_group_name = var.node_group_name
@@ -180,7 +199,11 @@ resource "aws_eks_node_group" "general" {
   subnet_ids      = var.private_subnet_ids # Worker nodes are typically placed in private subnets for better security
 
   instance_types = var.node_instance_types
-  disk_size      = var.node_disk_size
+
+  launch_template {
+    id      = aws_launch_template.eks_node_group.id
+    version = aws_launch_template.eks_node_group.latest_version
+  }
 
   scaling_config {
     desired_size = var.node_desired_size
