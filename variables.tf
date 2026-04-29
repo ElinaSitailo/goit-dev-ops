@@ -138,7 +138,7 @@ variable "eks_node_group_name" {
 variable "eks_node_instance_types" {
   description = "EC2 instance types for EKS nodes"
   type        = list(string)
-  default     = ["t3.medium"]
+  default     = ["t3.micro"] # Use a smaller instance type for cost efficiency in development environments
 }
 
 variable "eks_node_desired_size" {
