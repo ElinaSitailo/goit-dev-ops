@@ -164,3 +164,18 @@ variable "eks_node_disk_size" {
   type        = number
   default     = 20
 }
+
+# -----------------------------------------------------------------------
+#               App secrets (set via TF_VAR_ in .env, never hardcoded)
+# -----------------------------------------------------------------------
+
+variable "database_password" {
+  description = "Django app database password"
+  type        = string
+  sensitive   = true
+}
+
+variable "django_allowed_hosts" {
+  description = "Django ALLOWED_HOSTS value (e.g. myapp.example.com)"
+  type        = string
+}

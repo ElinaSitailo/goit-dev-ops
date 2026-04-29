@@ -23,12 +23,12 @@ resource "aws_subnet" "public" {
   cidr_block        = var.public_subnets[count.index]
   availability_zone = var.availability_zones[count.index]
 
-  # Automatically assign public IPs to instances launched in this subnet
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${var.name}-public-subnet-${count.index + 1}"
-    Type = "public"
+    Name                     = "${var.name}-public-subnet-${count.index + 1}"
+    Type                     = "public"
+    "kubernetes.io/role/elb" = "1"
   }
 }
 
@@ -39,12 +39,12 @@ resource "aws_subnet" "private" {
   cidr_block        = var.private_subnets[count.index]
   availability_zone = var.availability_zones[count.index]
 
-  # Do not assign public IP addresses
   map_public_ip_on_launch = false
 
   tags = {
-    Name = "${var.name}-private-subnet-${count.index + 1}"
-    Type = "private"
+    Name                              = "${var.name}-private-subnet-${count.index + 1}"
+    Type                              = "private"
+    "kubernetes.io/role/internal-elb" = "1"
   }
 }
 

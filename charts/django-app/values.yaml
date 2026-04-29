@@ -1,8 +1,10 @@
 # --------------------------------------------------------------------------------------------------
 #                               IMAGE PARAMETERS
+#                               Override at deploy time:
+#                               --set image.repository=<account>.dkr.ecr.eu-north-1.amazonaws.com/lesson-5-ecr
 # --------------------------------------------------------------------------------------------------
 image:
-  repository: "goit-dev-ops/django-app"
+  repository: "REPLACE_WITH_ECR_URL"
   tag: "latest"
   pullPolicy: "Always"
 
@@ -41,15 +43,32 @@ container:
       memory: "256Mi"
 
 # --------------------------------------------------------------------------------------------------
+#                               SECRET PARAMETERS (never commit real values)
+#                               Pass via: --set secret.databasePassword=$TF_VAR_database_password
+# --------------------------------------------------------------------------------------------------
+secret:
+  databasePassword: ""
+
+# --------------------------------------------------------------------------------------------------
 #                               ENVIRONMENT VARIABLES
 # --------------------------------------------------------------------------------------------------
 config:
   DJANGO_SETTINGS_MODULE: "app.settings"
-  DJANGO_ALLOWED_HOSTS: "*"
+  DJANGO_ALLOWED_HOSTS: ""
   DEBUG: "False"
   DATABASE_ENGINE: "django.db.backends.postgresql"
-  DATABASE_HOST: "db"
+  DATABASE_HOST: "django-app-postgresql"
   DATABASE_PORT: "5432"
   DATABASE_NAME: "django_db"
   DATABASE_USER: "django_user"
-  DATABASE_PASSWORD: "django_password"
+
+# --------------------------------------------------------------------------------------------------
+#                               POSTGRESQL (bitnami/postgresql subchart)
+#                               Password is injected at deploy time via --set
+# --------------------------------------------------------------------------------------------------
+postgresql:
+  enabled: true
+  auth:
+    username: "django_user"
+    database: "django_db"
+    password: ""

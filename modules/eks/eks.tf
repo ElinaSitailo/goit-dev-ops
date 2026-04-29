@@ -50,6 +50,7 @@ resource "aws_security_group" "eks_cluster" {
   name        = "${var.cluster_name}-cluster-sg"
   description = "Security group for EKS cluster control plane"
   vpc_id      = var.vpc_id
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -61,6 +62,16 @@ resource "aws_security_group" "eks_cluster" {
   tags = {
     Name = "${var.cluster_name}-cluster-sg"
   }
+}
+
+resource "aws_security_group_rule" "cluster_ingress_from_nodes" {
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.eks_cluster.id
+  source_security_group_id = aws_security_group.eks_node_group.id
+  description              = "Allow nodes to reach the API server"
 }
 
 # --------------------------------------------------------------------------------------------------
@@ -149,6 +160,7 @@ resource "aws_security_group" "eks_node_group" {
     cidr_blocks = ["0.0.0.0/0"]
     description = "Allow all outbound traffic from EKS node group to other resources"
   }
+
   ingress {
     from_port   = 0
     to_port     = 0
@@ -157,18 +169,20 @@ resource "aws_security_group" "eks_node_group" {
     description = "Allow node to node communication"
   }
 
-  ingress {
-    from_port       = 1025
-    to_port         = 65535
-    protocol        = "tcp"
-    security_groups = [aws_security_group.eks_cluster.id]
-    description     = "Allow communication from control plane to nodes"
-  }
-
   tags = {
     Name                                        = "${var.cluster_name}-node-group-sg"
     "kubernetes.io/cluster/${var.cluster_name}" = "owned"
   }
+}
+
+resource "aws_security_group_rule" "nodes_ingress_from_cluster" {
+  type                     = "ingress"
+  from_port                = 1025
+  to_port                  = 65535
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.eks_node_group.id
+  source_security_group_id = aws_security_group.eks_cluster.id
+  description              = "Allow communication from control plane to nodes"
 }
 # --------------------------------------------------------------------------------------------------
 #               Node group for EKS
