@@ -9,3 +9,6 @@ dependencies:
   - name: postgresql
     version: "16.4.4"
     repository: "https://charts.bitnami.com/bitnami"
+  - name: metrics-server
+    version: "3.12.1"
+    repository: "https://kubernetes-sigs.github.io/metrics-server/"

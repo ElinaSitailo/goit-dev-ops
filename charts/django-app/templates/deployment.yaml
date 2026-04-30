@@ -14,6 +14,10 @@ spec:
       labels:
         app: {{ .Release.Name }}-django
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox
+          command: ['sh', '-c', 'until nc -z {{ .Values.config.DATABASE_HOST }} {{ .Values.config.DATABASE_PORT }}; do echo waiting for postgres; sleep 2; done']
       containers:
         - name: django
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -36,11 +40,13 @@ spec:
             httpGet:
               path: /health/
               port: {{ .Values.service.targetPort }}
-            initialDelaySeconds: 10
-            periodSeconds: 5
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
           livenessProbe:
             httpGet:
               path: /health/
               port: {{ .Values.service.targetPort }}
-            initialDelaySeconds: 15
-            periodSeconds: 10
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 4

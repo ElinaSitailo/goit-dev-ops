@@ -4,7 +4,7 @@
 #                               --set image.repository=<account>.dkr.ecr.eu-north-1.amazonaws.com/lesson-5-ecr
 # --------------------------------------------------------------------------------------------------
 image:
-  repository: "REPLACE_WITH_ECR_URL"
+  repository: "694024477691.dkr.ecr.eu-north-1.amazonaws.com/lesson-5-ecr"
   tag: "latest"
   pullPolicy: "Always"
 
@@ -25,7 +25,7 @@ service:
 #                               Horizontal Pod Autoscaler PARAMETERS
 # --------------------------------------------------------------------------------------------------
 hpa:
-  enabled: false
+  enabled: true
   minReplicas: 1
   maxReplicas: 6
   targetCPUUtilizationPercentage: 80
@@ -72,3 +72,11 @@ postgresql:
     username: "django_user"
     database: "django_db"
     password: ""
+
+# --------------------------------------------------------------------------------------------------
+#                               METRICS SERVER
+#                               Required for HPA to read CPU/memory metrics
+# --------------------------------------------------------------------------------------------------
+metrics-server:
+  args:
+    - --kubelet-insecure-tls

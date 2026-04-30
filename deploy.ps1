@@ -19,13 +19,9 @@ Write-Host "-------------------------------------------------------------------"
 # -----------------------------------------------------------------------
 #               Terraform
 # -----------------------------------------------------------------------
-info "Running terraform apply..."
-terraform apply -auto-approve
-if ($LASTEXITCODE -ne 0) { err "terraform apply failed" }
-ok "Terraform apply complete"
 
-$ECR_URL      = (terraform output -raw ecr_repository_url)
-$CLUSTER_NAME = (terraform output -raw eks_cluster_name)
+$ECR_URL      = "694024477691.dkr.ecr.eu-north-1.amazonaws.com/lesson-5-ecr" # (terraform output -raw ecr_repository_url)
+$CLUSTER_NAME = "lesson-7-eks"
 ok "ECR URL: $ECR_URL"
 ok "EKS cluster: $CLUSTER_NAME"
 
@@ -34,14 +30,14 @@ ok "EKS cluster: $CLUSTER_NAME"
 # -----------------------------------------------------------------------
 info "Authenticating Docker to ECR..."
 $ECR_REGISTRY = $ECR_URL.Split("/")[0]
-$ECR_PASSWORD = (aws ecr get-login-password --region eu-north-1)
-if ($LASTEXITCODE -ne 0) { err "Failed to get ECR login password" }
-$ECR_PASSWORD | docker login --username AWS --password-stdin $ECR_REGISTRY
+$ECR_TOKEN = (aws ecr get-login-password --region eu-north-1)
+if ($LASTEXITCODE -ne 0) { err "Failed to get ECR login token" }
+docker login --username AWS --password $ECR_TOKEN $ECR_REGISTRY
 if ($LASTEXITCODE -ne 0) { err "Docker ECR login failed" }
 ok "Docker authenticated"
 
 info "Building Docker image..."
-docker build -t "${ECR_URL}:latest" .
+docker build -t "${ECR_URL}:latest" ./app
 if ($LASTEXITCODE -ne 0) { err "Docker build failed" }
 ok "Docker image built"
 
@@ -73,7 +69,7 @@ helm upgrade --install django-app ./charts/django-app `
   --set secret.databasePassword="$env:TF_VAR_database_password" `
   --set postgresql.auth.password="$env:TF_VAR_database_password" `
   --set config.DJANGO_ALLOWED_HOSTS="$env:TF_VAR_django_allowed_hosts" `
-  --wait --timeout=300s
+  --wait --timeout=600s
 if ($LASTEXITCODE -ne 0) { err "Helm deploy failed" }
 ok "Helm deploy complete"
 
