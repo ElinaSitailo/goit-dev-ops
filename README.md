@@ -52,21 +52,26 @@
     - windows:
         - https://stackoverflow.com/questions/66167230/message-while-installing-chocolatey
         - https://developer.hashicorp.com/terraform/install
-
-3. create s3 bucket in AWS console, use name from variables.tf "ns-bucket-to-store-tf-state-devops-lesson-5-04082026"
-4. run the command to use the bucket in terraform
+3. Optional commands:
+    - 🔧 `terraform init`
+    - 🔧 `terraform plan`
+4. create s3 bucket in AWS console, use name from variables.tf "ns-bucket-to-store-tf-state-devops-lesson-5-04082026"
+5. run the command to use the bucket in terraform
     - 🔧 `terraform import module.s3_backend.aws_s3_bucket.terraform_state ns-bucket-to-store-tf-state-devops-lesson-5-04082026`
-4. prepare env.ps1 file using env.ps1.example
-5. run
+6. prepare env.ps1 file using env.ps1.example
+7. run
     - 🔧 `. .\env.ps1` - to set environment variables locally
     - 🔧 `.\deploy.ps1` - to run `terraform apply`,
                         build docker image,
                         push image to ECR,
                         deploy django-app via Helm
-
-6. to delete clear environment run
+8. to check deployment result run:
+    - 🔧 `kubectl get svc django-app-django`
+    - 🔧 `kubectl get pods -o wide`
+    - 🔧 `curl http://<App URL from deployment output>/health/`
+9. to clear environment run the command below
     - 🔧 `terraform destroy -auto-approve`
-7. Manually delete 'ns-bucket-to-store-tf-state-devops-lesson-5-04082026' s3 bucket if needed
+100. Manually delete 'ns-bucket-to-store-tf-state-devops-lesson-5-04082026' s3 bucket if needed
 
 ## Screenshots
 
@@ -78,7 +83,10 @@
 
 ![terraform plan](images/lesson-7-1-terraform-plan.png)
 
-### 3. deploy.ps1
+### 3. deploy.ps1 output
 
 ![deploy 1](images/lesson-7-deploy-1.png)
+![deploy 2](images/lesson-7-deploy-result.png)
 
+### 4. app status check
+![app status check](images/lesson-7-app-status.png)
