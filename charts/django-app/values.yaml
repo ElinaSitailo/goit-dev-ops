@@ -68,10 +68,20 @@ config:
 # --------------------------------------------------------------------------------------------------
 postgresql:
   enabled: true
+  image:
+    registry: "registry-1.docker.io"
+    repository: "bitnami/postgresql"
+    tag: "latest"
+    digest: ""
   auth:
     username: "django_user"
     database: "django_db"
     password: ""
+  primary:
+    persistence:
+      # Dev-friendly default: avoids PVC provisioning blockers on fresh EKS clusters
+      # that don't have a working default StorageClass / EBS CSI driver yet.
+      enabled: false
 
 # --------------------------------------------------------------------------------------------------
 #                               METRICS SERVER
@@ -79,4 +89,4 @@ postgresql:
 # --------------------------------------------------------------------------------------------------
 metrics-server:
   args:
-    - --kubelet-insecure-tls
+  - --kubelet-insecure-tls

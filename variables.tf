@@ -100,7 +100,7 @@ variable "ecr_image_tag_mutability" {
 variable "ecr_force_delete" {
   description = "Force delete the ECR repository even if it contains images"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "ecr_max_image_count" {
@@ -165,6 +165,17 @@ variable "eks_node_disk_size" {
   default     = 20
 }
 
+variable "eks_endpoint_private_access" {
+  description = "Enable private access to the EKS endpoint"
+  type        = bool
+  default     = true
+}
+
+variable "eks_endpoint_public_access" {
+  description = "Enable public access to the EKS endpoint"
+  type        = bool
+  default     = true
+}
 # -----------------------------------------------------------------------
 #               App secrets (set via TF_VAR_ in .env, never hardcoded)
 # -----------------------------------------------------------------------

@@ -12,6 +12,51 @@ function ok($msg)   { Write-Host "[OK] $msg" -ForegroundColor Green }
 function info($msg) { Write-Host "[*]  $msg" -ForegroundColor Yellow }
 function err($msg)  { Write-Host "[X]  $msg" -ForegroundColor Red; exit 1 }
 
+function Show-HelmFailureDiagnostics {
+  Write-Host ""
+  Write-Host "-------------------------------------------------------------------"
+  Write-Host "  Helm deploy diagnostics" -ForegroundColor Red
+  Write-Host "-------------------------------------------------------------------"
+
+  info "Helm release status"
+  helm status django-app
+
+  info "Pods overview"
+  kubectl get pods -o wide
+
+  info "StatefulSet status"
+  kubectl get statefulset django-app-postgresql -o wide 2>$null
+
+  info "Deployment status"
+  kubectl get deployment django-app-django -o wide 2>$null
+
+  info "Recent warning events"
+  kubectl get events --sort-by=.lastTimestamp 2>$null | Select-Object -Last 30
+
+  info "PostgreSQL pod logs (if present)"
+  kubectl logs statefulset/django-app-postgresql --tail=80 2>$null
+
+  info "Django pod logs (if present)"
+  kubectl logs deployment/django-app-django --tail=80 2>$null
+
+  Write-Host "-------------------------------------------------------------------"
+}
+
+function Invoke-HelmUpgradeOrInstall {
+  $output = & helm upgrade --install django-app ./charts/django-app `
+    --set image.repository="$ECR_URL" `
+    --set image.tag="latest" `
+    --set secret.databasePassword="$env:TF_VAR_database_password" `
+    --set postgresql.auth.password="$env:TF_VAR_database_password" `
+    --set config.DJANGO_ALLOWED_HOSTS="$env:TF_VAR_django_allowed_hosts" `
+    --wait --timeout=600s 2>&1
+
+  return [PSCustomObject]@{
+    ExitCode = $LASTEXITCODE
+    Output   = ($output | Out-String)
+  }
+}
+
 Write-Host "-------------------------------------------------------------------"
 Write-Host "              Django app full deployment"
 Write-Host "-------------------------------------------------------------------"
@@ -19,9 +64,14 @@ Write-Host "-------------------------------------------------------------------"
 # -----------------------------------------------------------------------
 #               Terraform
 # -----------------------------------------------------------------------
+info "Running terraform apply..."
+terraform apply -auto-approve
+if ($LASTEXITCODE -ne 0) { err "terraform apply failed" }
+ok "Terraform apply complete"
 
-$ECR_URL      = "694024477691.dkr.ecr.eu-north-1.amazonaws.com/lesson-5-ecr" # (terraform output -raw ecr_repository_url)
-$CLUSTER_NAME = "lesson-7-eks"
+$ECR_URL      = (terraform output -raw ecr_repository_url)
+$CLUSTER_NAME = (terraform output -raw eks_cluster_name)
+
 ok "ECR URL: $ECR_URL"
 ok "EKS cluster: $CLUSTER_NAME"
 
@@ -63,14 +113,29 @@ if ($LASTEXITCODE -ne 0) { err "helm dependency update failed" }
 ok "Helm dependencies updated"
 
 info "Deploying django-app via Helm..."
-helm upgrade --install django-app ./charts/django-app `
-  --set image.repository="$ECR_URL" `
-  --set image.tag="latest" `
-  --set secret.databasePassword="$env:TF_VAR_database_password" `
-  --set postgresql.auth.password="$env:TF_VAR_database_password" `
-  --set config.DJANGO_ALLOWED_HOSTS="$env:TF_VAR_django_allowed_hosts" `
-  --wait --timeout=600s
-if ($LASTEXITCODE -ne 0) { err "Helm deploy failed" }
+$helmResult = Invoke-HelmUpgradeOrInstall
+
+if ($helmResult.ExitCode -ne 0) {
+  Write-Host $helmResult.Output
+
+  if ($helmResult.Output -match "StatefulSet\.apps.+is invalid: spec: Forbidden: updates to statefulset spec") {
+    info "Detected immutable StatefulSet spec change. Recreating Helm release..."
+
+    helm uninstall django-app
+    if ($LASTEXITCODE -ne 0) { err "Failed to uninstall existing django-app release" }
+
+    $helmResult = Invoke-HelmUpgradeOrInstall
+    if ($helmResult.ExitCode -ne 0) {
+      Write-Host $helmResult.Output
+      Show-HelmFailureDiagnostics
+      err "Helm deploy failed after release recreation"
+    }
+  }
+  else {
+    Show-HelmFailureDiagnostics
+    err "Helm deploy failed"
+  }
+}
 ok "Helm deploy complete"
 
 # -----------------------------------------------------------------------
