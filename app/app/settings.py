@@ -1,6 +1,8 @@
 import os
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-local-dev-key-change-in-prod")
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("DJANGO_SECRET_KEY environment variable is required")
 
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 

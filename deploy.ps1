@@ -7,6 +7,7 @@
 # Validate required env vars
 if (-not $env:TF_VAR_database_password) { Write-Error "TF_VAR_database_password is not set. Run: . .\env.ps1"; exit 1 }
 if (-not $env:TF_VAR_django_allowed_hosts) { Write-Error "TF_VAR_django_allowed_hosts is not set. Run: . .\env.ps1"; exit 1 }
+if (-not $env:TF_VAR_django_secret_key) { Write-Error "TF_VAR_django_secret_key is not set. Run: . .\env.ps1"; exit 1 }
 
 function ok($msg)   { Write-Host "[OK] $msg" -ForegroundColor Green }
 function info($msg) { Write-Host "[*]  $msg" -ForegroundColor Yellow }
@@ -47,6 +48,7 @@ function Invoke-HelmUpgradeOrInstall {
     --set image.repository="$ECR_URL" `
     --set image.tag="latest" `
     --set secret.databasePassword="$env:TF_VAR_database_password" `
+    --set secret.djangoSecretKey="$env:TF_VAR_django_secret_key" `
     --set postgresql.auth.password="$env:TF_VAR_database_password" `
     --set config.DJANGO_ALLOWED_HOSTS="$env:TF_VAR_django_allowed_hosts" `
     --wait --timeout=600s 2>&1

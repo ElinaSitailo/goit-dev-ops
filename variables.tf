@@ -94,13 +94,13 @@ variable "ecr_scan_on_push" {
 variable "ecr_image_tag_mutability" {
   description = "Image tag mutability (MUTABLE or IMMUTABLE)"
   type        = string
-  default     = "MUTABLE"
+  default     = "MUTABLE" # Use MUTABLE for development environments to allow tag updates, but consider IMMUTABLE for production to prevent accidental overwrites
 }
 
 variable "ecr_force_delete" {
   description = "Force delete the ECR repository even if it contains images"
   type        = bool
-  default     = true
+  default     = true # Set to true for development environments to allow easy cleanup, but be cautious in production environments
 }
 
 variable "ecr_max_image_count" {
@@ -174,7 +174,7 @@ variable "eks_endpoint_private_access" {
 variable "eks_endpoint_public_access" {
   description = "Enable public access to the EKS endpoint"
   type        = bool
-  default     = true
+  default     = true # Enable public access for development environments to allow kubectl access from outside the VPC, but consider disabling in production for enhanced security
 }
 # -----------------------------------------------------------------------
 #               App secrets (set via TF_VAR_ in .env, never hardcoded)

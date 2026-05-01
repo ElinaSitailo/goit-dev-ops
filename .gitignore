@@ -5,3 +5,5 @@
 crash.log
 .env
 env.ps1
+
+__pycache__

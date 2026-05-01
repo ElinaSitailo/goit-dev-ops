@@ -45,9 +45,11 @@ container:
 # --------------------------------------------------------------------------------------------------
 #                               SECRET PARAMETERS (never commit real values)
 #                               Pass via: --set secret.databasePassword=$TF_VAR_database_password
+#                                         --set secret.djangoSecretKey=$TF_VAR_django_secret_key
 # --------------------------------------------------------------------------------------------------
 secret:
   databasePassword: ""
+  djangoSecretKey: ""
 
 # --------------------------------------------------------------------------------------------------
 #                               ENVIRONMENT VARIABLES
