@@ -52,10 +52,14 @@ resource "helm_release" "argocd_application" {
           path: "${var.application_path}"
           helm:
             values: |
-              env:
-                DATABASE_PASSWORD: "${var.database_password}"
-                DJANGO_SECRET_KEY: "${var.django_secret_key}"
-                ALLOWED_HOSTS: "${var.django_allowed_hosts}"
+              secret:
+                databasePassword: "${var.database_password}"
+                djangoSecretKey: "${var.django_secret_key}"
+              config:
+                DJANGO_ALLOWED_HOSTS: "${var.django_allowed_hosts}"
+              postgresql:
+                auth:
+                  password: "${var.database_password}"
         destination:
           server: "https://kubernetes.default.svc"
           namespace: "${var.application_destination_ns}"
