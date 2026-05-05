@@ -97,7 +97,7 @@ spec:
           ]) {
             sh """
               set -eu
-              ECR_REGISTRY="\${ECR_REPOSITORY%%/*}"
+              ECR_REGISTRY="\$(echo "${ECR_REPOSITORY}" | cut -d/ -f1)"
               ECR_TOKEN="\$(aws ecr get-login-password --region "${AWS_REGION}")"
               AUTH_B64="\$(printf 'AWS:%s' "\${ECR_TOKEN}" | base64 | tr -d '\\n')"
 
