@@ -86,9 +86,6 @@ spec:
     }
 
     stage('ECR Auth') {
-      // Kaniko does not inherit Jenkins env vars — we write config.json explicitly.
-      // aws-cli fetches the ECR token and saves it to $WORKSPACE/.docker/config.json
-      // which Kaniko reads via --docker-config in the next stage.
       steps {
         container('aws-cli') {
           withCredentials([
@@ -112,14 +109,15 @@ spec:
     }
 
     stage('Build and Push to ECR') {
-      // Kaniko reads ECR credentials from the config.json prepared in the previous stage.
       steps {
         container('kaniko') {
           sh """
+            mkdir -p /kaniko/.docker
+            cp "${WORKSPACE}/.docker/config.json" /kaniko/.docker/config.json
+
             /kaniko/executor \
               --context "${WORKSPACE}/app" \
               --dockerfile "${WORKSPACE}/app/Dockerfile" \
-              --docker-config "${WORKSPACE}/.docker" \
               --destination "${ECR_REPOSITORY}:${env.IMAGE_TAG}" \
               --destination "${ECR_REPOSITORY}:latest"
           """
