@@ -62,12 +62,11 @@ spec:
   }
 
   environment {
-    AWS_REGION = 'eu-north-1'
+    AWS_REGION    = 'eu-north-1'
     ECR_REPOSITORY = "${params.ECR_REPOSITORY}"
-    GITOPS_REPO = "${params.GITOPS_REPO_URL}"
+    GITOPS_REPO   = "${params.GITOPS_REPO_URL}"
     GITOPS_BRANCH = "${params.GITOPS_BRANCH}"
-    VALUES_FILE = "${params.GITOPS_VALUES_FILE}"
-    IMAGE_TAG = ''
+    VALUES_FILE   = "${params.GITOPS_VALUES_FILE}"
   }
 
   options {
@@ -121,7 +120,7 @@ spec:
               --context "${WORKSPACE}/app" \
               --dockerfile "${WORKSPACE}/app/Dockerfile" \
               --docker-config "${WORKSPACE}/.docker" \
-              --destination "${ECR_REPOSITORY}:${IMAGE_TAG}" \
+              --destination "${ECR_REPOSITORY}:${env.IMAGE_TAG}" \
               --destination "${ECR_REPOSITORY}:latest"
           """
         }
@@ -142,7 +141,7 @@ spec:
 
               cd gitops-repo
 
-              IMAGE_TAG="${IMAGE_TAG}" yq e '.image.tag = strenv(IMAGE_TAG)' -i "${VALUES_FILE}"
+              IMAGE_TAG="${env.IMAGE_TAG}" yq e '.image.tag = strenv(IMAGE_TAG)' -i "${VALUES_FILE}"
 
               git config user.email "jenkins@local"
               git config user.name "jenkins-bot"
@@ -153,7 +152,7 @@ spec:
                 exit 0
               fi
 
-              git commit -m "ci: update django image tag to ${IMAGE_TAG}"
+              git commit -m "ci: update django image tag to ${env.IMAGE_TAG}"
               git push origin "${GITOPS_BRANCH}"
             """
           }
