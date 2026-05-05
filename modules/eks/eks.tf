@@ -161,18 +161,20 @@ resource "aws_security_group" "eks_node_group" {
     description = "Allow all outbound traffic from EKS node group to other resources"
   }
 
-  ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    self        = true
-    description = "Allow node to node communication"
-  }
-
   tags = {
     Name                                        = "${var.cluster_name}-node-group-sg"
     "kubernetes.io/cluster/${var.cluster_name}" = "owned"
   }
+}
+
+resource "aws_security_group_rule" "nodes_ingress_self" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  self              = true
+  security_group_id = aws_security_group.eks_node_group.id
+  description       = "Allow node to node communication"
 }
 
 resource "aws_security_group_rule" "nodes_ingress_from_cluster" {
@@ -197,6 +199,15 @@ resource "aws_launch_template" "eks_node_group" {
   name_prefix = "${var.cluster_name}-node-group-"
 
   vpc_security_group_ids = [aws_security_group.eks_node_group.id]
+
+  block_device_mappings {
+    device_name = "/dev/xvda"
+    ebs {
+      volume_size           = var.node_disk_size
+      volume_type           = "gp3"
+      delete_on_termination = true
+    }
+  }
 
   tag_specifications {
     resource_type = "instance"
@@ -246,4 +257,58 @@ resource "aws_eks_node_group" "general" {
   labels = {
     role = "general"
   }
+}
+
+# --------------------------------------------------------------------------------------------------
+#   EBS CSI Driver — required for PersistentVolumes on Kubernetes 1.23+
+# --------------------------------------------------------------------------------------------------
+
+data "aws_iam_policy" "ebs_csi_policy" {
+  arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+}
+
+data "tls_certificate" "eks_oidc" {
+  url = aws_eks_cluster.eks.identity[0].oidc[0].issuer
+}
+
+resource "aws_iam_openid_connect_provider" "eks" {
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.eks_oidc.certificates[0].sha1_fingerprint]
+  url             = aws_eks_cluster.eks.identity[0].oidc[0].issuer
+}
+
+data "aws_iam_policy_document" "ebs_csi_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect  = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.eks.arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:sub"
+      values   = ["system:serviceaccount:kube-system:ebs-csi-controller-sa"]
+    }
+  }
+}
+
+resource "aws_iam_role" "ebs_csi_driver" {
+  name               = "${var.cluster_name}-ebs-csi-driver"
+  assume_role_policy = data.aws_iam_policy_document.ebs_csi_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
+  role       = aws_iam_role.ebs_csi_driver.name
+  policy_arn = data.aws_iam_policy.ebs_csi_policy.arn
+}
+
+resource "aws_eks_addon" "ebs_csi_driver" {
+  cluster_name             = aws_eks_cluster.eks.name
+  addon_name               = "aws-ebs-csi-driver"
+  service_account_role_arn = aws_iam_role.ebs_csi_driver.arn
+
+  depends_on = [aws_eks_node_group.general]
 }

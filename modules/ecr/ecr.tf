@@ -35,28 +35,27 @@ resource "aws_ecr_lifecycle_policy" "main" {
   policy = jsonencode({
     rules = [
       {
-        # Store only the latest ${var.max_image_count} images with tags starting with "v"
-        rulePriority = 1
-        description  = "Store only the latest ${var.max_image_count} images with tags starting with 'v'"
-        selection = {
-          tagStatus     = "tagged"
-          tagPrefixList = ["v"]
-          countType     = "imageCountMoreThan"
-          countNumber   = var.max_image_count
-        }
-        action = {
-          type = "expire"
-        }
-      },
-      {
         # Delete untagged images older than 14 days
-        rulePriority = 2
+        rulePriority = 1
         description  = "Delete untagged images older than 14 days"
         selection = {
           tagStatus   = "untagged"
           countType   = "sinceImagePushed"
           countUnit   = "days"
           countNumber = 14
+        }
+        action = {
+          type = "expire"
+        }
+      },
+      {
+        # Keep only the latest N images tagged by Jenkins (BUILD_NUMBER-SHA format)
+        rulePriority = 2
+        description  = "Keep only the latest ${var.max_image_count} tagged images"
+        selection = {
+          tagStatus   = "any"
+          countType   = "imageCountMoreThan"
+          countNumber = var.max_image_count
         }
         action = {
           type = "expire"

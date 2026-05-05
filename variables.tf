@@ -186,7 +186,116 @@ variable "database_password" {
   sensitive   = true
 }
 
+variable "django_secret_key" {
+  description = "Django SECRET_KEY value"
+  type        = string
+  sensitive   = true
+}
+
 variable "django_allowed_hosts" {
   description = "Django ALLOWED_HOSTS value (e.g. myapp.example.com)"
   type        = string
+}
+
+# -----------------------------------------------------------------------
+#               Jenkins (Helm + Terraform)
+# -----------------------------------------------------------------------
+
+variable "jenkins_namespace" {
+  description = "Kubernetes namespace for Jenkins"
+  type        = string
+  default     = "jenkins"
+}
+
+variable "jenkins_release_name" {
+  description = "Helm release name for Jenkins"
+  type        = string
+  default     = "jenkins"
+}
+
+variable "jenkins_admin_username" {
+  description = "Jenkins admin username"
+  type        = string
+  default     = "admin"
+}
+
+variable "jenkins_admin_password" {
+  description = "Jenkins admin password"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_access_key_id" {
+  description = "AWS access key ID — used by the AWS CLI and provisioned as the aws-jenkins credential in Jenkins"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_secret_access_key" {
+  description = "AWS secret access key — used by the AWS CLI and provisioned as the aws-jenkins credential in Jenkins"
+  type        = string
+  sensitive   = true
+}
+
+variable "jenkins_gitops_username" {
+  description = "GitHub username provisioned as the gitops-repo-token credential in Jenkins"
+  type        = string
+}
+
+variable "jenkins_gitops_token" {
+  description = "GitHub PAT provisioned as the gitops-repo-token credential in Jenkins"
+  type        = string
+  sensitive   = true
+}
+
+# -----------------------------------------------------------------------
+#               Argo CD (Helm + Terraform)
+# -----------------------------------------------------------------------
+
+variable "argocd_namespace" {
+  description = "Kubernetes namespace for Argo CD"
+  type        = string
+  default     = "argocd"
+}
+
+variable "argocd_release_name" {
+  description = "Helm release name for Argo CD"
+  type        = string
+  default     = "argocd"
+}
+
+variable "argocd_application_name" {
+  description = "Argo CD Application resource name"
+  type        = string
+  default     = "django-app"
+}
+
+variable "argocd_application_repo_url" {
+  description = "Git repository URL monitored by Argo CD"
+  type        = string
+  default     = "https://github.com/ElinaSitailo/goit-dev-ops.git"
+}
+
+variable "argocd_application_target_revision" {
+  description = "Git revision/branch monitored by Argo CD"
+  type        = string
+  default     = "main"
+}
+
+variable "argocd_application_path" {
+  description = "Path to Helm chart in the Git repository"
+  type        = string
+  default     = "charts/django-app"
+}
+
+variable "argocd_application_destination_namespace" {
+  description = "Target namespace where Argo CD deploys the Helm chart"
+  type        = string
+  default     = "default"
+}
+
+variable "argocd_server_service_name" {
+  description = "Argo CD server Service name used for endpoint output lookup"
+  type        = string
+  default     = "argocd-server"
 }

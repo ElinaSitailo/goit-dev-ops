@@ -1,6 +1,5 @@
 provider "aws" {
   region  = var.main_aws_region
-  profile = "ns"
 
   default_tags {
     tags = {
@@ -59,10 +58,73 @@ module "eks" {
   private_subnet_ids = module.vpc.private_subnet_ids
   public_subnet_ids  = module.vpc.public_subnet_ids
 
+  endpoint_private_access = var.eks_endpoint_private_access
+  endpoint_public_access  = var.eks_endpoint_public_access
+
   node_group_name     = var.eks_node_group_name
   node_instance_types = var.eks_node_instance_types
   node_desired_size   = var.eks_node_desired_size
   node_min_size       = var.eks_node_min_size
   node_max_size       = var.eks_node_max_size
   node_disk_size      = var.eks_node_disk_size
+}
+
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_ca_certificate)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.main_aws_region]
+  }
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_ca_certificate)
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.main_aws_region]
+    }
+  }
+}
+
+module "jenkins" {
+  source = "./modules/jenkins"
+
+  namespace      = var.jenkins_namespace
+  release_name   = var.jenkins_release_name
+  admin_username = var.jenkins_admin_username
+  admin_password = var.jenkins_admin_password
+
+  aws_access_key_id     = var.aws_access_key_id
+  aws_secret_access_key = var.aws_secret_access_key
+  gitops_username       = var.jenkins_gitops_username
+  gitops_token          = var.jenkins_gitops_token
+
+  depends_on = [module.eks]
+}
+
+module "argo_cd" {
+  source = "./modules/argo_cd"
+
+  namespace                   = var.argocd_namespace
+  release_name                = var.argocd_release_name
+  application_name            = var.argocd_application_name
+  application_repo_url        = var.argocd_application_repo_url
+  application_target_revision = var.argocd_application_target_revision
+  application_path            = var.argocd_application_path
+  application_destination_ns  = var.argocd_application_destination_namespace
+  server_service_name         = var.argocd_server_service_name
+  server_insecure             = true # DEV ONLY — set false behind an ingress with TLS in production
+
+  database_password    = var.database_password
+  django_secret_key    = var.django_secret_key
+  django_allowed_hosts = var.django_allowed_hosts
+
+  depends_on = [module.eks]
 }

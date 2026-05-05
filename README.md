@@ -6,6 +6,7 @@
 - 📄 terraform.tf                  - Terraform backend (S3 + DynamoDB) and provider config
 - 📄 variables.tf                  - Root variables (AWS, VPC, ECR, EKS, app secrets)
 - 📄 outputs.tf                    - Root outputs (S3, DynamoDB, VPC, ECR, EKS)
+- 📄 Jenkinsfile                   - Jenkins pipeline (Kaniko + Git) for build/push/update-values flow
 - 📄 deploy.ps1                    - Full deployment script (Terraform → Docker → ECR → Helm)
 - 📄 env.ps1.example               - Template for local secrets (copy to env.ps1, never commit)
 - 📄 .env.example                  - Template for Linux/WSL secrets (copy to .env, never commit)
@@ -44,6 +45,16 @@
         - 📄 eks.tf                - EKS cluster, node group, IAM roles, security groups, launch template
         - 📄 variables.tf          - Module variables
         - 📄 outputs.tf            - Module outputs
+    - 📁 jenkins/                  - Jenkins module
+        - 📄 providers.tf          - Required providers for Helm/Kubernetes resources
+        - 📄 variables.tf          - Module variables
+        - 📄 jenkins.tf            - Jenkins namespace + Helm release + JCasC Kubernetes cloud
+        - 📄 outputs.tf            - Module outputs
+    - 📁 argo_cd/                  - Argo CD module
+        - 📄 providers.tf          - Required providers for Helm/Kubernetes resources
+        - 📄 variables.tf          - Module variables
+        - 📄 jenkins.tf            - Argo CD namespace + Helm release + Application resource
+        - 📄 outputs.tf            - Module outputs
 
 ## Commands to init and run infrastructure
 
@@ -71,7 +82,31 @@
     - 🔧 `curl http://<App URL from deployment output>/health/`
 9. to clear environment run the command below
     - 🔧 `terraform destroy -auto-approve`
-100. Manually delete 'ns-bucket-to-store-tf-state-devops-lesson-5-04082026' s3 bucket if needed
+10. Manually delete 'ns-bucket-to-store-tf-state-devops-lesson-5-04082026' s3 bucket if needed
+
+## Jenkins + Argo CD workflow
+
+1. Terraform now also installs Jenkins and Argo CD to EKS using Helm provider.
+2. Jenkins is configured with Kubernetes cloud and a pod template that contains Kaniko and Git containers.
+3. Jenkins pipeline in `Jenkinsfile` implements the flow:
+    - build image from `app/Dockerfile`;
+    - push image to ECR;
+    - update `image.tag` in Helm values file in GitOps repo;
+    - push commit to `main`.
+4. Argo CD installs an `Application` resource that watches the Git repo/path and auto-syncs changes to the cluster.
+
+### Jenkins credentials required
+
+- `aws-jenkins` (AWS credentials in Jenkins, type: AWS Credentials)
+- `gitops-repo-token` (username/password or PAT for target GitOps repository)
+
+### Variables to review before apply
+
+- `argocd_application_repo_url`
+- `argocd_application_target_revision`
+- `argocd_application_path`
+- `argocd_application_destination_namespace`
+- `jenkins_admin_password`
 
 ## Screenshots
 

@@ -1,4 +1,12 @@
 # -----------------------------------------------------------------------
+#               Main
+# -----------------------------------------------------------------------
+output "aws_region" {
+  description = "AWS region used for all resources"
+  value       = var.main_aws_region
+}
+
+# -----------------------------------------------------------------------
 #               S3
 # -----------------------------------------------------------------------
 output "bucket_name" {
@@ -107,4 +115,57 @@ output "eks_node_group_arn" {
 output "eks_node_group_instance_types" {
   description = "Instance types used in the EKS node group"
   value       = module.eks.node_group_instance_types
+}
+
+# -----------------------------------------------------------------------
+#               Jenkins
+# -----------------------------------------------------------------------
+
+output "jenkins_namespace" {
+  description = "Kubernetes namespace for Jenkins"
+  value       = module.jenkins.namespace
+}
+
+output "jenkins_release_name" {
+  description = "Helm release name for Jenkins"
+  value       = module.jenkins.release_name
+}
+
+output "jenkins_service_external_hostname" {
+  description = "Jenkins external DNS hostname"
+  value       = module.jenkins.service_external_hostname
+}
+
+output "jenkins_service_external_ip" {
+  description = "Jenkins external IP"
+  value       = module.jenkins.service_external_ip
+}
+
+# -----------------------------------------------------------------------
+#               Argo CD
+# -----------------------------------------------------------------------
+
+output "argocd_namespace" {
+  description = "Kubernetes namespace for Argo CD"
+  value       = module.argo_cd.namespace
+}
+
+output "argocd_release_name" {
+  description = "Helm release name for Argo CD"
+  value       = module.argo_cd.release_name
+}
+
+output "argocd_application_name" {
+  description = "Argo CD Application name"
+  value       = module.argo_cd.application_name
+}
+
+output "argocd_server_external_hostname" {
+  description = "Argo CD server external DNS hostname"
+  value       = module.argo_cd.server_external_hostname
+}
+
+output "argocd_server_external_ip" {
+  description = "Argo CD server external IP"
+  value       = module.argo_cd.server_external_ip
 }

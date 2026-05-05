@@ -63,6 +63,11 @@ output "cluster_private_subnet_ids" {
   value       = var.private_subnet_ids
 }
 
+output "cluster_ca_certificate" {
+  description = "Base64-encoded certificate authority data for the EKS cluster"
+  value       = aws_eks_cluster.eks.certificate_authority[0].data
+}
+
 output "kubeconfig_command" {
   description = "Command to generate kubeconfig for connecting to the EKS cluster using AWS CLI"
   value       = "aws eks update-kubeconfig --name ${aws_eks_cluster.eks.name}"
