@@ -71,7 +71,6 @@ spec:
   }
 
   options {
-    timestamps()
     disableConcurrentBuilds()
   }
 
