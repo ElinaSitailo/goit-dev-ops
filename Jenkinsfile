@@ -1,7 +1,7 @@
 pipeline {
   parameters {
     string(name: 'ECR_REPOSITORY', defaultValue: '', description: 'Target ECR repository URL (e.g. <account_id>.dkr.ecr.<region>.amazonaws.com/<repo-name>). Get it from: terraform output -raw ecr_repository_url')
-    string(name: 'GITOPS_REPO_URL', defaultValue: 'https://github.com/ElinaSitailo/goit-dev-ops-gitops.git', description: 'GitOps repository URL that stores Helm values')
+    string(name: 'GITOPS_REPO_URL', defaultValue: 'https://github.com/ElinaSitailo/goit-dev-ops.git', description: 'GitOps repository URL that stores Helm values')
     string(name: 'GITOPS_BRANCH', defaultValue: 'main', description: 'Branch in GitOps repository to update')
     string(name: 'GITOPS_VALUES_FILE', defaultValue: 'charts/django-app/values.yaml', description: 'Path to Helm values.yaml in GitOps repository')
   }
@@ -134,7 +134,7 @@ spec:
 
     stage('Update Helm values in GitOps repo') {
       steps {
-        container('yq') {
+        container('git') {
           withCredentials([
             usernamePassword(credentialsId: 'gitops-repo-token', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_TOKEN')
           ]) {
@@ -146,7 +146,7 @@ spec:
 
               cd /workspace/gitops-repo
 
-              IMAGE_TAG="${env.IMAGE_TAG}" yq e '.image.tag = strenv(IMAGE_TAG)' -i "${VALUES_FILE}"
+              sed -i "s|^  tag:.*|  tag: \\"${env.IMAGE_TAG}\\"|" "${VALUES_FILE}"
 
               git config user.email "jenkins@local"
               git config user.name "jenkins-bot"
