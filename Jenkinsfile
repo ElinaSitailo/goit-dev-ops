@@ -95,18 +95,18 @@ spec:
           withCredentials([
             [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-jenkins']
           ]) {
-            sh '''
+            sh """
               set -eu
-              ECR_REGISTRY="${ECR_REPOSITORY%%/*}"
-              ECR_TOKEN="$(aws ecr get-login-password --region "${AWS_REGION}")"
-              AUTH_B64="$(printf 'AWS:%s' "${ECR_TOKEN}" | base64 | tr -d '\\n')"
+              ECR_REGISTRY="\${ECR_REPOSITORY%%/*}"
+              ECR_TOKEN="\$(aws ecr get-login-password --region "${AWS_REGION}")"
+              AUTH_B64="\$(printf 'AWS:%s' "\${ECR_TOKEN}" | base64 | tr -d '\\n')"
 
               mkdir -p "${WORKSPACE}/.docker"
-              printf '{"auths":{"%s":{"auth":"%s"}}}' "${ECR_REGISTRY}" "${AUTH_B64}" \
+              printf '{"auths":{"%s":{"auth":"%s"}}}' "\${ECR_REGISTRY}" "\${AUTH_B64}" \
                 > "${WORKSPACE}/.docker/config.json"
 
-              echo "ECR auth config written for registry: ${ECR_REGISTRY}"
-            '''
+              echo "ECR auth config written for registry: \${ECR_REGISTRY}"
+            """
           }
         }
       }
@@ -116,14 +116,14 @@ spec:
       // Kaniko reads ECR credentials from the config.json prepared in the previous stage.
       steps {
         container('kaniko') {
-          sh '''
+          sh """
             /kaniko/executor \
               --context "${WORKSPACE}/app" \
               --dockerfile "${WORKSPACE}/app/Dockerfile" \
               --docker-config "${WORKSPACE}/.docker" \
               --destination "${ECR_REPOSITORY}:${IMAGE_TAG}" \
               --destination "${ECR_REPOSITORY}:latest"
-          '''
+          """
         }
       }
     }
@@ -134,15 +134,15 @@ spec:
           withCredentials([
             usernamePassword(credentialsId: 'gitops-repo-token', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_TOKEN')
           ]) {
-            sh '''
+            sh """
               set -eu
 
               rm -rf gitops-repo
-              git clone --branch "${GITOPS_BRANCH}" "https://${GIT_USERNAME}:${GIT_TOKEN}@${GITOPS_REPO#https://}" gitops-repo
+              git clone --branch "${GITOPS_BRANCH}" "https://\${GIT_USERNAME}:\${GIT_TOKEN}@\${GITOPS_REPO#https://}" gitops-repo
 
               cd gitops-repo
 
-              yq e '.image.tag = strenv(IMAGE_TAG)' -i "${VALUES_FILE}"
+              IMAGE_TAG="${IMAGE_TAG}" yq e '.image.tag = strenv(IMAGE_TAG)' -i "${VALUES_FILE}"
 
               git config user.email "jenkins@local"
               git config user.name "jenkins-bot"
@@ -155,7 +155,7 @@ spec:
 
               git commit -m "ci: update django image tag to ${IMAGE_TAG}"
               git push origin "${GITOPS_BRANCH}"
-            '''
+            """
           }
         }
       }
