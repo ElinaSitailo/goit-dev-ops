@@ -62,11 +62,13 @@ spec:
   }
 
   environment {
-    AWS_REGION    = 'eu-north-1'
+    AWS_REGION     = 'eu-north-1'
     ECR_REPOSITORY = "${params.ECR_REPOSITORY}"
-    GITOPS_REPO   = "${params.GITOPS_REPO_URL}"
-    GITOPS_BRANCH = "${params.GITOPS_BRANCH}"
-    VALUES_FILE   = "${params.GITOPS_VALUES_FILE}"
+    GITOPS_REPO    = "${params.GITOPS_REPO_URL}"
+    GITOPS_BRANCH  = "${params.GITOPS_BRANCH}"
+    VALUES_FILE    = "${params.GITOPS_VALUES_FILE}"
+    SOURCE_REPO    = 'github.com/ElinaSitailo/goit-dev-ops.git'
+    SOURCE_BRANCH  = 'lesson-8-9'
   }
 
   options {
@@ -76,11 +78,16 @@ spec:
   stages {
     stage('Checkout Source') {
       steps {
-        checkout scm
-        script {
-          sh 'git config --global --add safe.directory "${WORKSPACE}"'
-          def shortSha = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
-          env.IMAGE_TAG = "${env.BUILD_NUMBER}-${shortSha}"
+        container('git') {
+          withCredentials([
+            usernamePassword(credentialsId: 'gitops-repo-token', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_TOKEN')
+          ]) {
+            script {
+              sh "git clone --branch ${SOURCE_BRANCH} https://\${GIT_USERNAME}:\${GIT_TOKEN}@${SOURCE_REPO} /workspace/src"
+              def shortSha = sh(script: 'git -C /workspace/src rev-parse --short=7 HEAD', returnStdout: true).trim()
+              env.IMAGE_TAG = "${env.BUILD_NUMBER}-${shortSha}"
+            }
+          }
         }
       }
     }
@@ -116,8 +123,8 @@ spec:
             cp /workspace/.docker/config.json /kaniko/.docker/config.json
 
             /kaniko/executor \
-              --context "${WORKSPACE}/app" \
-              --dockerfile "${WORKSPACE}/app/Dockerfile" \
+              --context /workspace/src/app \
+              --dockerfile /workspace/src/app/Dockerfile \
               --destination "${ECR_REPOSITORY}:${env.IMAGE_TAG}" \
               --destination "${ECR_REPOSITORY}:latest"
           """
@@ -134,10 +141,10 @@ spec:
             sh """
               set -eu
 
-              rm -rf gitops-repo
-              git clone --branch "${GITOPS_BRANCH}" "https://\${GIT_USERNAME}:\${GIT_TOKEN}@\${GITOPS_REPO#https://}" gitops-repo
+              rm -rf /workspace/gitops-repo
+              git clone --branch "${GITOPS_BRANCH}" "https://\${GIT_USERNAME}:\${GIT_TOKEN}@\${GITOPS_REPO#https://}" /workspace/gitops-repo
 
-              cd gitops-repo
+              cd /workspace/gitops-repo
 
               IMAGE_TAG="${env.IMAGE_TAG}" yq e '.image.tag = strenv(IMAGE_TAG)' -i "${VALUES_FILE}"
 
