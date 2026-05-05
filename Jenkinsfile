@@ -79,6 +79,7 @@ spec:
       steps {
         checkout scm
         script {
+          sh 'git config --global --add safe.directory "${WORKSPACE}"'
           def shortSha = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
           env.IMAGE_TAG = "${env.BUILD_NUMBER}-${shortSha}"
         }
