@@ -97,9 +97,9 @@ spec:
               ECR_TOKEN="\$(aws ecr get-login-password --region "${AWS_REGION}")"
               AUTH_B64="\$(printf 'AWS:%s' "\${ECR_TOKEN}" | base64 | tr -d '\\n')"
 
-              mkdir -p "${WORKSPACE}/.docker"
+              mkdir -p /workspace/.docker
               printf '{"auths":{"%s":{"auth":"%s"}}}' "\${ECR_REGISTRY}" "\${AUTH_B64}" \
-                > "${WORKSPACE}/.docker/config.json"
+                > /workspace/.docker/config.json
 
               echo "ECR auth config written for registry: \${ECR_REGISTRY}"
             """
@@ -113,7 +113,7 @@ spec:
         container('kaniko') {
           sh """
             mkdir -p /kaniko/.docker
-            cp "${WORKSPACE}/.docker/config.json" /kaniko/.docker/config.json
+            cp /workspace/.docker/config.json /kaniko/.docker/config.json
 
             /kaniko/executor \
               --context "${WORKSPACE}/app" \
