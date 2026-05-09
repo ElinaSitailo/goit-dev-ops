@@ -299,3 +299,97 @@ variable "argocd_server_service_name" {
   type        = string
   default     = "argocd-server"
 }
+
+# -----------------------------------------------------------------------
+#               RDS
+# -----------------------------------------------------------------------
+
+variable "rds_use_aurora" {
+  description = "When true, deploys Aurora MySQL; when false, deploys standard RDS MySQL"
+  type        = bool
+  default     = false
+}
+
+variable "rds_identifier" {
+  description = "Unique identifier for the RDS instance or Aurora cluster"
+  type        = string
+  default     = "lesson-10-db"
+}
+
+variable "rds_name" {
+  description = "Name tag applied to RDS resources"
+  type        = string
+  default     = "lesson-10-rds"
+}
+
+variable "rds_engine" {
+  description = "Database engine: 'mysql' for standard RDS, 'aurora-mysql' for Aurora"
+  type        = string
+  default     = "mysql"
+}
+
+variable "rds_engine_version" {
+  description = "Database engine version (e.g. '8.0' for MySQL, '8.0.mysql_aurora.3.07.1' for Aurora MySQL)"
+  type        = string
+  default     = "8.0"
+}
+
+variable "rds_instance_class" {
+  description = "DB instance class (e.g. db.t3.micro, db.r6g.large)"
+  type        = string
+  default     = "db.t3.micro"
+}
+
+variable "rds_multi_az" {
+  description = "Enable Multi-AZ standby for RDS or add a reader instance for Aurora"
+  type        = bool
+  default     = false
+}
+
+variable "rds_database_name" {
+  description = "Name of the initial database to create"
+  type        = string
+  default     = "appdb"
+}
+
+variable "rds_database_username" {
+  description = "Master username for the database"
+  type        = string
+  default     = "admin"
+}
+
+variable "rds_allocated_storage" {
+  description = "Initial storage size in GiB (RDS only)"
+  type        = number
+  default     = 20
+}
+
+variable "rds_max_allocated_storage" {
+  description = "Upper limit for autoscaling storage in GiB (RDS only; 0 disables autoscaling)"
+  type        = number
+  default     = 100
+}
+
+variable "rds_storage_type" {
+  description = "Storage type: gp2, gp3, or io1 (RDS only)"
+  type        = string
+  default     = "gp3"
+}
+
+variable "rds_backup_retention_period" {
+  description = "Days to retain automated backups (0 disables backups)"
+  type        = number
+  default     = 7
+}
+
+variable "rds_deletion_protection" {
+  description = "Prevent accidental deletion of the database"
+  type        = bool
+  default     = false
+}
+
+variable "rds_skip_final_snapshot" {
+  description = "Skip final snapshot on destroy (set false in production)"
+  type        = bool
+  default     = true
+}

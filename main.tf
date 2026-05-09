@@ -128,3 +128,34 @@ module "argo_cd" {
 
   depends_on = [module.eks]
 }
+
+module "rds" {
+  source = "./modules/rds"
+
+  use_aurora = var.rds_use_aurora
+
+  identifier = var.rds_identifier
+  name       = var.rds_name
+
+  engine         = var.rds_engine
+  engine_version = var.rds_engine_version
+  instance_class = var.rds_instance_class
+  multi_az       = var.rds_multi_az
+
+  database_name     = var.rds_database_name
+  database_username = var.rds_database_username
+  database_password = var.database_password
+
+  allocated_storage     = var.rds_allocated_storage
+  max_allocated_storage = var.rds_max_allocated_storage
+  storage_type          = var.rds_storage_type
+
+  vpc_id     = module.vpc.id
+  subnet_ids = module.vpc.private_subnet_ids
+
+  backup_retention_period = var.rds_backup_retention_period
+  deletion_protection     = var.rds_deletion_protection
+  skip_final_snapshot     = var.rds_skip_final_snapshot
+
+  depends_on = [module.vpc]
+}

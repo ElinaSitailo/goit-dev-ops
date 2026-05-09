@@ -169,3 +169,37 @@ output "argocd_server_external_ip" {
   description = "Argo CD server external IP"
   value       = module.argo_cd.server_external_ip
 }
+
+# -----------------------------------------------------------------------
+#               RDS
+# -----------------------------------------------------------------------
+
+output "rds_endpoint" {
+  description = "Primary connection endpoint (writer endpoint for Aurora, instance address for RDS)"
+  value       = module.rds.endpoint
+}
+
+output "rds_port" {
+  description = "Database port"
+  value       = module.rds.port
+}
+
+output "rds_reader_endpoint" {
+  description = "Read-only endpoint for Aurora cluster (null for standard RDS)"
+  value       = module.rds.reader_endpoint
+}
+
+output "rds_security_group_id" {
+  description = "ID of the RDS/Aurora security group"
+  value       = module.rds.security_group_id
+}
+
+output "rds_db_instance_id" {
+  description = "RDS DB instance ID (null for Aurora)"
+  value       = module.rds.db_instance_id
+}
+
+output "rds_cluster_id" {
+  description = "Aurora cluster ID (null for standard RDS)"
+  value       = module.rds.cluster_id
+}

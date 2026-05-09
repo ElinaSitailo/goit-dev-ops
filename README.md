@@ -16,6 +16,7 @@ This project provisions a complete AWS cloud infrastructure and GitOps CI/CD pip
    - [Kubernetes Cluster (EKS)](#44-kubernetes-cluster-eks)
    - [CI Server (Jenkins)](#45-ci-server-jenkins)
    - [GitOps Controller (Argo CD)](#46-gitops-controller-argo-cd)
+   - [Database (RDS / Aurora MySQL)](#47-database-rds--aurora-mysql)
 5. [CI/CD Pipeline Detail](#5-cicd-pipeline-detail)
 6. [Application (Django)](#6-application-django)
 7. [Terraform Module Tree](#7-terraform-module-tree)
@@ -332,6 +333,57 @@ Access: `LoadBalancer` Service — `terraform output argocd_server_external_host
 
 ---
 
+### 4.7 Database (RDS / Aurora MySQL)
+
+**Module**: `modules/rds`
+
+The module deploys either a standard RDS MySQL instance or an Aurora MySQL cluster depending on the `use_aurora` flag. All supporting resources (subnet group, security group, parameter group) are created automatically.
+
+| Resource | RDS MySQL (`use_aurora = false`) | Aurora MySQL (`use_aurora = true`) |
+| -------- | -------------------------------- | ----------------------------------- |
+| `aws_db_subnet_group` | shared | shared |
+| `aws_security_group` | shared | shared |
+| `aws_db_parameter_group` | created (`mysql8.0` family) | — |
+| `aws_rds_cluster_parameter_group` | — | created (`aurora-mysql8.0` family) |
+| `aws_db_instance` | created | — |
+| `aws_rds_cluster` | — | created |
+| `aws_rds_cluster_instance` (writer) | — | created |
+| `aws_rds_cluster_instance` (reader) | — | created when `multi_az = true` |
+
+**Key parameters accepted by the module:**
+
+| Parameter | Description | Default |
+| --------- | ----------- | ------- |
+| `use_aurora` | Switch between RDS MySQL and Aurora MySQL | `false` |
+| `engine` | `mysql` or `aurora-mysql` | `mysql` |
+| `engine_version` | e.g. `8.0` / `8.0.mysql_aurora.3.07.1` | `8.0` |
+| `instance_class` | DB instance size | `db.t3.micro` |
+| `multi_az` | Standby (RDS) or reader instance (Aurora) | `false` |
+| `allocated_storage` | Initial storage in GiB (RDS only) | `20` |
+| `storage_type` | `gp2`, `gp3`, or `io1` (RDS only) | `gp3` |
+| `backup_retention_period` | Days to keep automated backups | `7` |
+| `deletion_protection` | Prevent accidental deletion | `false` |
+
+The database is placed in **private subnets** and is not publicly accessible. The security group allows inbound MySQL traffic only from explicitly listed CIDR blocks or security group IDs (e.g. the EKS node group SG).
+
+The `database_password` is shared with the existing `TF_VAR_database_password` secret — no additional credential is needed.
+
+**Switching engines** — set these two variables together in `env.ps1`:
+
+```powershell
+# Standard RDS MySQL
+$env:TF_VAR_rds_use_aurora     = "false"
+$env:TF_VAR_rds_engine         = "mysql"
+$env:TF_VAR_rds_engine_version = "8.0"
+
+# Aurora MySQL
+$env:TF_VAR_rds_use_aurora     = "true"
+$env:TF_VAR_rds_engine         = "aurora-mysql"
+$env:TF_VAR_rds_engine_version = "8.0.mysql_aurora.3.07.1"
+```
+
+---
+
 ## 5. CI/CD Pipeline Detail
 
 **File**: [Jenkinsfile](Jenkinsfile)
@@ -396,7 +448,9 @@ goit-dev-ops/
     ├── ecr/              # ECR repository + lifecycle policy + IAM policy
     ├── eks/              # EKS cluster, node group, IAM roles, security groups
     ├── jenkins/          # Jenkins Helm release, JCasC, K8s cloud, credentials
-    └── argo_cd/          # Argo CD Helm release + Application resource
+    ├── argo_cd/          # Argo CD Helm release + Application resource
+    └── rds/              # RDS MySQL instance or Aurora MySQL cluster (use_aurora flag)
+                          #   auto-creates: subnet group, security group, parameter group
 ```
 
 ---
@@ -533,8 +587,25 @@ git log --oneline -5 -- charts/django-app/values.yaml
 # 3. Argo CD rolled out the new image
 kubectl rollout status deployment/django-app-django -n default
 
-# 4. Health check still passes after rollout
+# 4. Django Health check still passes after rollout
 curl "http://$HOST/health/"
+```
+
+### check DB instance/cluster status
+
+```powershell
+
+# Standard RDS. Expected: "available"
+aws rds describe-db-instances `
+  --db-instance-identifier lesson-10-db `
+  --region eu-north-1 `
+  --query "DBInstances[0].DBInstanceStatus"
+
+# Aurora. Expected: "available":
+aws rds describe-db-clusters `
+  --db-cluster-identifier lesson-10-db `
+  --region eu-north-1 `
+  --query "DBClusters[0].Status"
 ```
 
 ### terraform apply result
@@ -549,6 +620,8 @@ curl "http://$HOST/health/"
 ![terraform apply result](images/lesson-8-9-smoke-test-2_1.png)
 ### smoke test result 4
 ![terraform apply result](images/lesson-8-9-smoke-test-3.png)
+### smoke test result 5 
+![terraform apply result](images/lesson-10-smoke-test-aws-rds.png)
 
 
 ---
