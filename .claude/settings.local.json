@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sh --version)",
+      "Bash(Get-ChildItem -Path \"c:\\\\src\\\\GoIt\\\\goit-dev-ops\" -Force)",
+      "Bash(Select-Object Name, FullName)",
+      "Bash(python3 -c ' *)",
+      "Bash(kubectl describe *)",
+      "Bash(gh pr *)"
+    ]
+  }
+}
