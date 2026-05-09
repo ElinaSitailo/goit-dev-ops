@@ -393,3 +393,49 @@ variable "rds_skip_final_snapshot" {
   type        = bool
   default     = true
 }
+
+# -----------------------------------------------------------------------
+#               Monitoring (Prometheus + Grafana)
+# -----------------------------------------------------------------------
+
+variable "monitoring_namespace" {
+  description = "Kubernetes namespace for Prometheus and Grafana"
+  type        = string
+  default     = "monitoring"
+}
+
+variable "monitoring_prometheus_release_name" {
+  description = "Helm release name for kube-prometheus-stack"
+  type        = string
+  default     = "prometheus"
+}
+
+variable "monitoring_grafana_release_name" {
+  description = "Helm release name for Grafana"
+  type        = string
+  default     = "grafana"
+}
+
+variable "monitoring_grafana_admin_user" {
+  description = "Grafana admin username"
+  type        = string
+  default     = "admin"
+}
+
+variable "monitoring_grafana_admin_password" {
+  description = "Grafana admin password"
+  type        = string
+  sensitive   = true
+}
+
+variable "monitoring_prometheus_storage_size" {
+  description = "PersistentVolumeClaim size for Prometheus TSDB"
+  type        = string
+  default     = "10Gi"
+}
+
+variable "monitoring_grafana_storage_size" {
+  description = "PersistentVolumeClaim size for Grafana"
+  type        = string
+  default     = "5Gi"
+}

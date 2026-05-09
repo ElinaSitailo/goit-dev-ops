@@ -159,3 +159,17 @@ module "rds" {
 
   depends_on = [module.vpc]
 }
+
+module "monitoring" {
+  source = "./modules/monitoring"
+
+  namespace                = var.monitoring_namespace
+  prometheus_release_name  = var.monitoring_prometheus_release_name
+  grafana_release_name     = var.monitoring_grafana_release_name
+  grafana_admin_user       = var.monitoring_grafana_admin_user
+  grafana_admin_password   = var.monitoring_grafana_admin_password
+  prometheus_storage_size  = var.monitoring_prometheus_storage_size
+  grafana_storage_size     = var.monitoring_grafana_storage_size
+
+  depends_on = [module.eks]
+}

@@ -203,3 +203,22 @@ output "rds_cluster_id" {
   description = "Aurora cluster ID (null for standard RDS)"
   value       = module.rds.cluster_id
 }
+
+# -----------------------------------------------------------------------
+#               Monitoring
+# -----------------------------------------------------------------------
+
+output "monitoring_namespace" {
+  description = "Kubernetes namespace for monitoring components"
+  value       = module.monitoring.namespace
+}
+
+output "monitoring_grafana_service_name" {
+  description = "Grafana Kubernetes Service name (use with kubectl port-forward)"
+  value       = module.monitoring.grafana_service_name
+}
+
+output "monitoring_prometheus_release_name" {
+  description = "Helm release name for kube-prometheus-stack"
+  value       = module.monitoring.prometheus_release_name
+}

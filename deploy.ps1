@@ -16,6 +16,7 @@ if (-not $env:TF_VAR_jenkins_admin_password) { Write-Error "TF_VAR_jenkins_admin
 if (-not $env:TF_VAR_jenkins_gitops_username) { Write-Error "TF_VAR_jenkins_gitops_username is not set. Run: . .\env.ps1"; exit 1 }
 if (-not $env:TF_VAR_jenkins_gitops_token) { Write-Error "TF_VAR_jenkins_gitops_token is not set. Run: . .\env.ps1"; exit 1 }
 if (-not $env:TF_VAR_argocd_application_repo_url) { Write-Error "TF_VAR_argocd_application_repo_url is not set. Run: . .\env.ps1"; exit 1 }
+if (-not $env:TF_VAR_monitoring_grafana_admin_password) { Write-Error "TF_VAR_monitoring_grafana_admin_password is not set. Run: . .\env.ps1"; exit 1 }
 
 function ok($msg)   { Write-Host "[OK] $msg" -ForegroundColor Green }
 function info($msg) { Write-Host "[*]  $msg" -ForegroundColor Yellow }
@@ -25,6 +26,7 @@ Write-Host "-------------------------------------------------------------------"
 Write-Host "              Infrastructure deployment"
 Write-Host "  Docker build/push -> Jenkins"
 Write-Host "  App rollout        -> Argo CD"
+Write-Host "  Monitoring         -> Prometheus + Grafana"
 Write-Host "-------------------------------------------------------------------"
 
 # -----------------------------------------------------------------------
@@ -35,9 +37,11 @@ terraform apply -auto-approve
 if ($LASTEXITCODE -ne 0) { err "terraform apply failed" }
 ok "Terraform apply complete"
 
-$ECR_URL      = (terraform output -raw ecr_repository_url)
-$CLUSTER_NAME = (terraform output -raw eks_cluster_name)
-$AWS_REGION   = (terraform output -raw aws_region)
+$ECR_URL          = (terraform output -raw ecr_repository_url)
+$CLUSTER_NAME     = (terraform output -raw eks_cluster_name)
+$AWS_REGION       = (terraform output -raw aws_region)
+$GrafanaSvcName   = (terraform output -raw monitoring_grafana_service_name)
+$MonitoringNs     = (terraform output -raw monitoring_namespace)
 
 ok "ECR URL: $ECR_URL"
 ok "EKS cluster: $CLUSTER_NAME"
@@ -76,6 +80,17 @@ if (-not $ArgoCDHost -or $ArgoCDHost -eq "null") {
 }
 
 # -----------------------------------------------------------------------
+#               Verify monitoring pods are ready
+# -----------------------------------------------------------------------
+info "Waiting for Grafana pod to be ready..."
+kubectl wait --for=condition=ready pod --selector="app.kubernetes.io/name=grafana" --namespace=$MonitoringNs --timeout=300s
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "[!]  Grafana pod did not become ready within 5 minutes. Check: kubectl get pods -n $MonitoringNs" -ForegroundColor Yellow
+} else {
+  ok "Grafana is ready"
+}
+
+# -----------------------------------------------------------------------
 #               Summary
 # -----------------------------------------------------------------------
 Write-Host ""
@@ -87,6 +102,10 @@ Write-Host ""
 Write-Host "  Jenkins:  http://$JenkinsHost" -ForegroundColor Cyan
 Write-Host "  Argo CD:  http://$ArgoCDHost" -ForegroundColor Cyan
 Write-Host ""
+Write-Host "  Grafana dashboard (port-forward):" -ForegroundColor Cyan
+Write-Host "    kubectl port-forward svc/$GrafanaSvcName 3000:80 -n $MonitoringNs" -ForegroundColor DarkCyan
+Write-Host "    http://localhost:3000  (user: admin)" -ForegroundColor Cyan
+Write-Host ""
 Write-Host "  Next steps:" -ForegroundColor Yellow
 Write-Host "    1. Open Jenkins UI and add credentials:"
 Write-Host "         aws-jenkins        (AWS Credentials)"
@@ -96,4 +115,5 @@ Write-Host "    3. Run the pipeline - it will build the image, push to ECR, upda
 Write-Host "    4. Argo CD will auto-sync and deploy the app to the cluster."
 Write-Host "    5. Check Argo CD Application status:"
 Write-Host "         kubectl get application django-app -n argocd"
+Write-Host "    6. Open Grafana at http://localhost:3000 after running the port-forward above."
 Write-Host "-------------------------------------------------------------------"

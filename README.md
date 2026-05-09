@@ -17,6 +17,7 @@ This project provisions a complete AWS cloud infrastructure and GitOps CI/CD pip
    - [CI Server (Jenkins)](#45-ci-server-jenkins)
    - [GitOps Controller (Argo CD)](#46-gitops-controller-argo-cd)
    - [Database (RDS / Aurora MySQL)](#47-database-rds--aurora-mysql)
+   - [Monitoring (Prometheus + Grafana)](#48-monitoring-prometheus--grafana)
 5. [CI/CD Pipeline Detail](#5-cicd-pipeline-detail)
 6. [Application (Django)](#6-application-django)
 7. [Terraform Module Tree](#7-terraform-module-tree)
@@ -384,6 +385,38 @@ $env:TF_VAR_rds_engine_version = "8.0.mysql_aurora.3.07.1"
 
 ---
 
+### 4.8 Monitoring (Prometheus + Grafana)
+
+**Module**: `modules/monitoring`
+
+Deploys two Helm releases into the `monitoring` namespace:
+
+| Release | Chart | Purpose |
+| ------- | ----- | ------- |
+| `prometheus` | `kube-prometheus-stack` v70.4.2 | Scrapes cluster, node, and pod metrics via kube-state-metrics and node-exporter |
+| `grafana` | `grafana` v8.10.4 | Displays Prometheus metrics; pre-loaded with three community dashboards |
+
+The alert manager is disabled to keep the dev footprint small — enable it for production via the `kube-prometheus-stack` Helm values.
+
+**Grafana is deployed as `ClusterIP`** (no public LoadBalancer). Access it via port-forward after `deploy.ps1` completes:
+
+```powershell
+kubectl port-forward svc/grafana 3000:80 -n monitoring
+# open http://localhost:3000  (user: admin)
+```
+
+**Pre-loaded dashboards:**
+
+| Dashboard | Grafana ID | Shows |
+| --------- | ---------- | ----- |
+| Kubernetes Cluster | 7249 | Node CPU/memory, pod counts |
+| Kubernetes Pods | 6336 | Per-pod CPU, memory, restarts |
+| Node Exporter Full | 1860 | Host-level disk, network, CPU |
+
+Both Prometheus and Grafana use `gp2` PersistentVolumeClaims so data survives pod restarts.
+
+---
+
 ## 5. CI/CD Pipeline Detail
 
 **File**: [Jenkinsfile](Jenkinsfile)
@@ -622,7 +655,14 @@ aws rds describe-db-clusters `
 ![terraform apply result](images/lesson-8-9-smoke-test-3.png)
 ### smoke test result 5 
 ![terraform apply result](images/lesson-10-smoke-test-aws-rds.png)
-
+### smoke test result 6 
+![terraform apply result](images/fp-kubectl-port-forwards.png)
+### smoke test result 7 
+![terraform apply result](images/fp-kubectl-get-all-n-monitoring.png)
+### smoke test result 8 
+![terraform apply result](images/fp-jenkins-argocd.png)
+### smoke test result 9 
+![terraform apply result](images/fp-grafana-dashboard.png)
 
 ---
 
